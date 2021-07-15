@@ -125,7 +125,7 @@ SpeciesLookeR <- function(AbstractStrings,IDs,Kingdom,Add)
       for(u in 1:length(GeneralIDs))
       {
         fooby <- which(AbstractIDs %in% GeneralIDs[u])
-        realfake[u] <- as.character(InGenera[i]) %in% as.character(splitlist[[fooby]])
+        realfake[u] <- as.character(InGenera[i]) %in% as.character(splitlist[fooby])
       }
       if(1 %in% realfake)
       {
