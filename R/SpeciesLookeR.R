@@ -64,10 +64,16 @@ SpeciesLookeR <- function(AbstractStrings,IDs,Kingdom,Add)
   UniqueGeneraNames <- unique(gsub(" .*","",SppNames))
   UniqueGeneraNamesDets <- c(1:length(UniqueGeneraNames))
   print("...Inferring Hypotheses of Genera In Abstracts")
-  pb <- txtProgressBar(min = 1, max = length(UniqueGeneraNames), style = 3)
+  if(length(UniqueGeneraNames) > 1)
+  {
+    pb <- txtProgressBar(min = 1, max = length(UniqueGeneraNames), style = 3)
+  }
   for(i in 1:length(UniqueGeneraNames))
   {
-    setTxtProgressBar(pb, i)
+    if(length(UniqueGeneraNames) > 1)
+    {
+      setTxtProgressBar(pb, i)
+    }
     UniqueGeneraNamesDets[i] <- grepl(as.character(UniqueGeneraNames[i]), as.character(onestring))
   }
   InGenera <- sort(UniqueGeneraNames[which(UniqueGeneraNamesDets == 1)])
@@ -82,10 +88,18 @@ SpeciesLookeR <- function(AbstractStrings,IDs,Kingdom,Add)
   grandgenlooks <- as.data.frame(matrix(nrow=0,ncol = 4)) #make outmatrix
   colnames(grandgenlooks) <- c("Genus","Species","Matches","Crops")
   print("...Searching Abstracts for Species")
-  pb <- txtProgressBar(min = 1, max = length(InGenera), style = 3)
-  for(i in 1:length(InGenera))
+  if(length(InGenera) > 0)
   {
-    setTxtProgressBar(pb, i)
+    if(length(InGenera) > 1)
+    {
+      pb <- txtProgressBar(min = 1, max = length(InGenera), style = 3)
+    }
+    for(i in 1:length(InGenera))
+    {
+    if(length(InGenera) > 1)
+    {
+      setTxtProgressBar(pb, i)
+    }
     ThisGenusSpp <- SppNames[which(as.character(GeneraNamesFull) %in% as.character(InGenera[i]))]
     inspp <- c()
     inmatch <- c()
@@ -145,7 +159,7 @@ SpeciesLookeR <- function(AbstractStrings,IDs,Kingdom,Add)
         for(u in 1:length(missingmatches))
         {
           fooby <- which(AbstractIDs %in% missingmatches[u])
-          realfake[u] <- tolower(as.character(InGenera[i])) %in% tolower(as.character(splitlist[[fooby]]))
+          realfake[u] <- tolower(as.character(InGenera[i])) %in% tolower(as.character(splitlist[fooby]))
         }
         if(1 %in% realfake)
         {
@@ -158,6 +172,7 @@ SpeciesLookeR <- function(AbstractStrings,IDs,Kingdom,Add)
           grandgenlooks <- as.data.frame(rbind(grandgenlooks,grandgenlooksSmall))
         }
       }
+    }
     }
   }
   grandgenlooks <- as.data.frame(grandgenlooks[,1:3])
