@@ -272,7 +272,6 @@ if(length(IDs) > 0)
 }else{
   message("NO ABSTRACTS FOUND, BROADEN SEARCH TERMS")
 }
-}
 
   }else if(Kingdom == "A"){
 
@@ -506,7 +505,6 @@ if(length(IDs) > 0)
   }
 }else{
   message("NO ABSTRACTS FOUND, BROADEN SEARCH TERMS")
-}
 }
   }else if(Kingdom == "F"){
 
