@@ -42,6 +42,7 @@ EasyG2PMineR <- function(Query, Kingdom, Seed, HowMany)
   {
 
 # Search
+message("Searching PubMed using Query")
 res <- RISmed::EUtilsSummary(Query,
                              type="esearch", db="pubmed", datetype='pdat',
                              retmax=10000)
@@ -56,14 +57,16 @@ if(length(IDs) > 0)
   }
   IDs <- as.data.frame(IDs)
   IDs <- as.numeric(as.character(IDs[,1]))
+  message("Extracting abstracts text")
   AbstractsStrings <- G2PMineR::AbstractsGetteR(IDs)
   IDs <- IDs[!is.na(AbstractsStrings)]
   AbstractsStrings <- AbstractsStrings[!is.na(AbstractsStrings)]
-
+  message("Cleaning abstracts")
   # Cleaning Abstracts
   AbstractsStrings <- G2PMineR::HTMLElementRemoveR(AbstractsStrings)
   AbstractsStrings <- G2PMineR::AlphaNumericalizeR(AbstractsStrings)
   # Mining Abstracts for Taxonomy
+  message("Searching abstracts for species")
   AbstractsSpp <- G2PMineR::SpeciesLookeR(AbstractsStrings,IDs, Kingdom = "P", Add = NULL)
 
   if(nrow(AbstractsSpp) > 0)
@@ -72,10 +75,12 @@ if(length(IDs) > 0)
     # Mining Abstracts for Genes
     SpeciesAbbrvs <- G2PMineR::SpeciesAbbreviatoR(AbstractsSpp)
     Sys.sleep(2)
+    message("Searching abstracts for genes")
     GenesOut <- G2PMineR::GenesLookeR(AbstractsStrings, IDs, Kingdom = "P", Add = NULL, SppAbbr = SpeciesAbbrvs)
+    GenesOut <- as.data.frame(GenesOut[!GenesOut$InOrNot == "No",])
     if(nrow(GenesOut) == 1 && is.na(GenesOut[1,1]))
     {
-      message("NO GENES FOUND, BROADEN SEARCH TERMS")
+      stop("NO GENES FOUND, BROADEN SEARCH TERMS")
     }else{
       Sys.sleep(2)
       GenesOut <- G2PMineR::SynonymReplaceR(GenesOut, Kingdom = "P")
@@ -87,14 +92,16 @@ if(length(IDs) > 0)
       GeneGrades <- G2PMineR::UtilityGradeR(GenesOut, Kingdom = "P", Add = NULL, Groups=as.data.frame(GeneGroups))
       Sys.sleep(2)
       # Mining Abstracts for Phenotypes
+      message("Searching abstracts for phenotypes")
       AbsPhen <- G2PMineR::PhenotypeLookeR(AbstractsStrings, IDs, Kingdom = "P", Add = NULL)
       if(nrow(AbsPhen) == 0)
       {
-        message("NO PHENOTYPES FOUND, BROADEN SEARCH TERMS")
+        stop("NO PHENOTYPES FOUND, BROADEN SEARCH TERMS")
       }else{
         # Analyzing genes, taxonomy, and phenotypes data
         #for species matches
         Sys.sleep(2)
+        message("Producing bar plots")
         SppBarPlotDF <- G2PMineR::MatchesBarPlotteR(AbstractsSpp$Species, AbstractsSpp$Matches,n = 25)
         #for genes matches
         Sys.sleep(2)
@@ -110,11 +117,18 @@ if(length(IDs) > 0)
 
         # Internal interrelatins network analysis
         #for species matches
+        message("Conducting internal network analyses")
         Sys.sleep(2)
         SppInt <- G2PMineR::InternalPairwiseDistanceInferreR(AbstractsSpp$Species,
                                                              AbstractsSpp$Matches,
                                                              allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
+        if(nrow(SppInt) > 1)
+        {
+          SppIntSmall <- G2PMineR::TopN_PickeR_Internal(SppInt, n = 50, decreasing = T)
+        }else{
+          SppIntSmall <- SppInt
+        }
         SppIntSmall <- G2PMineR::TopN_PickeR_Internal(SppInt, n = 50, decreasing = T)
         Sys.sleep(2)
         rwmsS <- as.dist(SppIntSmall, diag = F, upper = FALSE)
@@ -123,7 +137,12 @@ if(length(IDs) > 0)
         GenInt <- G2PMineR::InternalPairwiseDistanceInferreR(Genez[,1], Genez[,2],
                                                              allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        GenIntSmall <- G2PMineR::TopN_PickeR_Internal(GenInt, n = 50, decreasing = T)
+        if(nrow(GenInt) > 1)
+        {
+          GenIntSmall <- G2PMineR::TopN_PickeR_Internal(GenInt, n = 50, decreasing = T)
+        }else{
+          GenIntSmall <- GenInt
+        }
         Sys.sleep(2)
         rwmsG <- as.dist(GenIntSmall, diag = F, upper = FALSE)
         Sys.sleep(2)
@@ -132,20 +151,33 @@ if(length(IDs) > 0)
                                                               AbsPhen$AbsMatches,
                                                               allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        PhenIntSmall <- G2PMineR::TopN_PickeR_Internal(PhenInt, n = 100, decreasing = T)
+        if(nrow(PhenInt) > 1)
+        {
+          PhenIntSmall <- G2PMineR::TopN_PickeR_Internal(PhenInt, n = 100, decreasing = T)
+        }else{
+          PhenIntSmall <- PhenInt
+        }
         Sys.sleep(2)
         rwmsP <- as.dist(PhenIntSmall, diag = FALSE, upper = FALSE)
         Sys.sleep(2)
 
         # Linking genome to phenome (within a taxonomic framework)
         #Phenotypes vs Species
+        message("Performing bipartite analyses")
         PhenoSpecies <- G2PMineR::PairwiseDistanceInferreR(AbstractsSpp$Species,
                                                            AbstractsSpp$Matches,
                                                            AbsPhen$PhenoWord,
                                                            AbsPhen$AbsMatches,
                                                            allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        PhenoSpeciesSmall <- G2PMineR::TopN_PickeR(PhenoSpecies, n = 100, decreasing = T)
+        if(nrow(PhenoSpecies) > 1)
+        {
+          PhenoSpeciesSmall <- G2PMineR::TopN_PickeR(PhenoSpecies, n = 50, decreasing = T)
+        }else if(nrow(PhenoSpecies) == 1){
+          PhenoSpeciesSmall <- PhenoSpecies
+        }else if(nrow(PhenoSpecies) == 0){
+          stop("ERROR: No P2S Associations Found, broaden search terms, increase HowMany, or change Seed")
+        }
         Sys.sleep(2)
         #Genes vs Species
         GeneSpecies <- G2PMineR::PairwiseDistanceInferreR(AbstractsSpp$Species,
@@ -153,15 +185,30 @@ if(length(IDs) > 0)
                                                           Genez[,1], Genez[,2],
                                                           allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        GeneSpeciesSmall <- G2PMineR::TopN_PickeR(GeneSpecies, n = 100, decreasing = T)
+        if(nrow(GeneSpecies) > 1)
+        {
+          GeneSpeciesSmall <- G2PMineR::TopN_PickeR(GeneSpecies, n = 50, decreasing = T)
+        }else if(nrow(GeneSpecies) == 1){
+          GeneSpeciesSmall <- GeneSpecies
+        }else if(nrow(GeneSpecies) == 0){
+          stop("ERROR: No G2S Associations Found, broaden search terms, increase HowMany, or change Seed")
+        }
         Sys.sleep(2)
         #Phenotypes vs Genes
         PhenoGenes <- G2PMineR::PairwiseDistanceInferreR(AbsPhen$PhenoWord,
                                                          AbsPhen$AbsMatches,
                                                          Genez[,1], Genez[,2],
                                                          allabsnum = length(AbstractsStrings))
+
         Sys.sleep(2)
-        PhenoGenesSmall <- G2PMineR::TopN_PickeR(PhenoGenes, n = 50, decreasing = T)
+        if(nrow(PhenoGenes) > 1)
+        {
+          PhenoGenesSmall <- G2PMineR::TopN_PickeR(PhenoGenes, n = 50, decreasing = T)
+        }else if(nrow(PhenoGenes) == 1){
+          PhenoGenesSmall <- PhenoGenes
+        }else if(nrow(PhenoGenes) == 0){
+          stop("ERROR: No G2P Associations Found, broaden search terms, increase HowMany, or change Seed")
+        }
         Sys.sleep(2)
         spmats <- ceiling(G2PMineR::AbstractsProportionCalculator(AbstractsSpp, IDs)*100)
         gnmats <- ceiling(G2PMineR::AbstractsProportionCalculator(GenesOut, IDs)*100)
@@ -169,7 +216,7 @@ if(length(IDs) > 0)
 
 
 
-
+        message("Producing output")
         pdf("InterpretableResults.pdf")
         plot.new()
         text(0.3,1,"EasyG2PMineR Output")
@@ -225,12 +272,15 @@ if(length(IDs) > 0)
 }else{
   message("NO ABSTRACTS FOUND, BROADEN SEARCH TERMS")
 }
-
+}
 
   }else if(Kingdom == "A"){
 
 # Search
-res <- RISmed::EUtilsSummary(Query, type="esearch", db="pubmed", datetype='pdat', retmax=10000)
+message("Searching PubMed using Query")
+res <- RISmed::EUtilsSummary(Query,
+                             type="esearch", db="pubmed", datetype='pdat',
+                             retmax=10000)
 IDs <- attr(res,"PMID")
 if(length(IDs) > 0)
 {
@@ -242,14 +292,16 @@ if(length(IDs) > 0)
   }
   IDs <- as.data.frame(IDs)
   IDs <- as.numeric(as.character(IDs[,1]))
+  message("Extracting abstracts text")
   AbstractsStrings <- G2PMineR::AbstractsGetteR(IDs)
   IDs <- IDs[!is.na(AbstractsStrings)]
   AbstractsStrings <- AbstractsStrings[!is.na(AbstractsStrings)]
-
+  message("Cleaning abstracts")
   # Cleaning Abstracts
   AbstractsStrings <- G2PMineR::HTMLElementRemoveR(AbstractsStrings)
   AbstractsStrings <- G2PMineR::AlphaNumericalizeR(AbstractsStrings)
   # Mining Abstracts for Taxonomy
+  message("Searching abstracts for species")
   AbstractsSpp <- G2PMineR::SpeciesLookeR(AbstractsStrings,IDs, Kingdom = "A", Add = NULL)
 
   if(nrow(AbstractsSpp) > 0)
@@ -258,10 +310,12 @@ if(length(IDs) > 0)
     # Mining Abstracts for Genes
     SpeciesAbbrvs <- G2PMineR::SpeciesAbbreviatoR(AbstractsSpp)
     Sys.sleep(2)
+    message("Searching abstracts for genes")
     GenesOut <- G2PMineR::GenesLookeR(AbstractsStrings, IDs, Kingdom = "A", Add = NULL, SppAbbr = SpeciesAbbrvs)
+    GenesOut <- as.data.frame(GenesOut[!GenesOut$InOrNot == "No",])
     if(nrow(GenesOut) == 1 && is.na(GenesOut[1,1]))
     {
-      message("NO GENES FOUND, BROADEN SEARCH TERMS")
+      stop("NO GENES FOUND, BROADEN SEARCH TERMS")
     }else{
       Sys.sleep(2)
       GenesOut <- G2PMineR::SynonymReplaceR(GenesOut, Kingdom = "A")
@@ -273,14 +327,16 @@ if(length(IDs) > 0)
       GeneGrades <- G2PMineR::UtilityGradeR(GenesOut, Kingdom = "A", Add = NULL, Groups=as.data.frame(GeneGroups))
       Sys.sleep(2)
       # Mining Abstracts for Phenotypes
+      message("Searching abstracts for phenotypes")
       AbsPhen <- G2PMineR::PhenotypeLookeR(AbstractsStrings, IDs, Kingdom = "A", Add = NULL)
       if(nrow(AbsPhen) == 0)
       {
-        message("NO PHENOTYPES FOUND, BROADEN SEARCH TERMS")
+        stop("NO PHENOTYPES FOUND, BROADEN SEARCH TERMS")
       }else{
         # Analyzing genes, taxonomy, and phenotypes data
         #for species matches
         Sys.sleep(2)
+        message("Producing bar plots")
         SppBarPlotDF <- G2PMineR::MatchesBarPlotteR(AbstractsSpp$Species, AbstractsSpp$Matches,n = 25)
         #for genes matches
         Sys.sleep(2)
@@ -296,11 +352,18 @@ if(length(IDs) > 0)
 
         # Internal interrelatins network analysis
         #for species matches
+        message("Conducting internal network analyses")
         Sys.sleep(2)
         SppInt <- G2PMineR::InternalPairwiseDistanceInferreR(AbstractsSpp$Species,
                                                              AbstractsSpp$Matches,
                                                              allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
+        if(nrow(SppInt) > 1)
+        {
+          SppIntSmall <- G2PMineR::TopN_PickeR_Internal(SppInt, n = 50, decreasing = T)
+        }else{
+          SppIntSmall <- SppInt
+        }
         SppIntSmall <- G2PMineR::TopN_PickeR_Internal(SppInt, n = 50, decreasing = T)
         Sys.sleep(2)
         rwmsS <- as.dist(SppIntSmall, diag = F, upper = FALSE)
@@ -309,7 +372,12 @@ if(length(IDs) > 0)
         GenInt <- G2PMineR::InternalPairwiseDistanceInferreR(Genez[,1], Genez[,2],
                                                              allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        GenIntSmall <- G2PMineR::TopN_PickeR_Internal(GenInt, n = 50, decreasing = T)
+        if(nrow(GenInt) > 1)
+        {
+          GenIntSmall <- G2PMineR::TopN_PickeR_Internal(GenInt, n = 50, decreasing = T)
+        }else{
+          GenIntSmall <- GenInt
+        }
         Sys.sleep(2)
         rwmsG <- as.dist(GenIntSmall, diag = F, upper = FALSE)
         Sys.sleep(2)
@@ -318,20 +386,33 @@ if(length(IDs) > 0)
                                                               AbsPhen$AbsMatches,
                                                               allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        PhenIntSmall <- G2PMineR::TopN_PickeR_Internal(PhenInt, n = 100, decreasing = T)
+        if(nrow(PhenInt) > 1)
+        {
+          PhenIntSmall <- G2PMineR::TopN_PickeR_Internal(PhenInt, n = 100, decreasing = T)
+        }else{
+          PhenIntSmall <- PhenInt
+        }
         Sys.sleep(2)
         rwmsP <- as.dist(PhenIntSmall, diag = FALSE, upper = FALSE)
         Sys.sleep(2)
 
         # Linking genome to phenome (within a taxonomic framework)
         #Phenotypes vs Species
+        message("Performing bipartite analyses")
         PhenoSpecies <- G2PMineR::PairwiseDistanceInferreR(AbstractsSpp$Species,
                                                            AbstractsSpp$Matches,
                                                            AbsPhen$PhenoWord,
                                                            AbsPhen$AbsMatches,
                                                            allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        PhenoSpeciesSmall <- G2PMineR::TopN_PickeR(PhenoSpecies, n = 100, decreasing = T)
+        if(nrow(PhenoSpecies) > 1)
+        {
+          PhenoSpeciesSmall <- G2PMineR::TopN_PickeR(PhenoSpecies, n = 50, decreasing = T)
+        }else if(nrow(PhenoSpecies) == 1){
+          PhenoSpeciesSmall <- PhenoSpecies
+        }else if(nrow(PhenoSpecies) == 0){
+          stop("ERROR: No P2S Associations Found, broaden search terms, increase HowMany, or change Seed")
+        }
         Sys.sleep(2)
         #Genes vs Species
         GeneSpecies <- G2PMineR::PairwiseDistanceInferreR(AbstractsSpp$Species,
@@ -339,19 +420,38 @@ if(length(IDs) > 0)
                                                           Genez[,1], Genez[,2],
                                                           allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        GeneSpeciesSmall <- G2PMineR::TopN_PickeR(GeneSpecies, n = 100, decreasing = T)
+        if(nrow(GeneSpecies) > 1)
+        {
+          GeneSpeciesSmall <- G2PMineR::TopN_PickeR(GeneSpecies, n = 50, decreasing = T)
+        }else if(nrow(GeneSpecies) == 1){
+          GeneSpeciesSmall <- GeneSpecies
+        }else if(nrow(GeneSpecies) == 0){
+          stop("ERROR: No G2S Associations Found, broaden search terms, increase HowMany, or change Seed")
+        }
         Sys.sleep(2)
         #Phenotypes vs Genes
         PhenoGenes <- G2PMineR::PairwiseDistanceInferreR(AbsPhen$PhenoWord,
                                                          AbsPhen$AbsMatches,
                                                          Genez[,1], Genez[,2],
                                                          allabsnum = length(AbstractsStrings))
+
         Sys.sleep(2)
-        PhenoGenesSmall <- G2PMineR::TopN_PickeR(PhenoGenes, n = 50, decreasing = T)
+        if(nrow(PhenoGenes) > 1)
+        {
+          PhenoGenesSmall <- G2PMineR::TopN_PickeR(PhenoGenes, n = 50, decreasing = T)
+        }else if(nrow(PhenoGenes) == 1){
+          PhenoGenesSmall <- PhenoGenes
+        }else if(nrow(PhenoGenes) == 0){
+          stop("ERROR: No G2P Associations Found, broaden search terms, increase HowMany, or change Seed")
+        }
         Sys.sleep(2)
         spmats <- ceiling(G2PMineR::AbstractsProportionCalculator(AbstractsSpp, IDs)*100)
         gnmats <- ceiling(G2PMineR::AbstractsProportionCalculator(GenesOut, IDs)*100)
         phmats <- ceiling(G2PMineR::AbstractsProportionCalculator(AbsPhen, IDs)*100)
+
+
+
+        message("Producing output")
         pdf("InterpretableResults.pdf")
         plot.new()
         text(0.3,1,"EasyG2PMineR Output")
@@ -407,10 +507,14 @@ if(length(IDs) > 0)
 }else{
   message("NO ABSTRACTS FOUND, BROADEN SEARCH TERMS")
 }
-
+}
   }else if(Kingdom == "F"){
-    # Search
-res <- RISmed::EUtilsSummary(Query, type="esearch", db="pubmed", datetype='pdat', retmax=10000)
+
+# Search
+message("Searching PubMed using Query")
+res <- RISmed::EUtilsSummary(Query,
+                             type="esearch", db="pubmed", datetype='pdat',
+                             retmax=10000)
 IDs <- attr(res,"PMID")
 if(length(IDs) > 0)
 {
@@ -422,14 +526,16 @@ if(length(IDs) > 0)
   }
   IDs <- as.data.frame(IDs)
   IDs <- as.numeric(as.character(IDs[,1]))
+  message("Extracting abstracts text")
   AbstractsStrings <- G2PMineR::AbstractsGetteR(IDs)
   IDs <- IDs[!is.na(AbstractsStrings)]
   AbstractsStrings <- AbstractsStrings[!is.na(AbstractsStrings)]
-
+  message("Cleaning abstracts")
   # Cleaning Abstracts
   AbstractsStrings <- G2PMineR::HTMLElementRemoveR(AbstractsStrings)
   AbstractsStrings <- G2PMineR::AlphaNumericalizeR(AbstractsStrings)
   # Mining Abstracts for Taxonomy
+  message("Searching abstracts for species")
   AbstractsSpp <- G2PMineR::SpeciesLookeR(AbstractsStrings,IDs, Kingdom = "F", Add = NULL)
 
   if(nrow(AbstractsSpp) > 0)
@@ -438,10 +544,12 @@ if(length(IDs) > 0)
     # Mining Abstracts for Genes
     SpeciesAbbrvs <- G2PMineR::SpeciesAbbreviatoR(AbstractsSpp)
     Sys.sleep(2)
+    message("Searching abstracts for genes")
     GenesOut <- G2PMineR::GenesLookeR(AbstractsStrings, IDs, Kingdom = "F", Add = NULL, SppAbbr = SpeciesAbbrvs)
+    GenesOut <- as.data.frame(GenesOut[!GenesOut$InOrNot == "No",])
     if(nrow(GenesOut) == 1 && is.na(GenesOut[1,1]))
     {
-      message("NO GENES FOUND, BROADEN SEARCH TERMS")
+      stop("NO GENES FOUND, BROADEN SEARCH TERMS")
     }else{
       Sys.sleep(2)
       GenesOut <- G2PMineR::SynonymReplaceR(GenesOut, Kingdom = "F")
@@ -453,14 +561,16 @@ if(length(IDs) > 0)
       GeneGrades <- G2PMineR::UtilityGradeR(GenesOut, Kingdom = "F", Add = NULL, Groups=as.data.frame(GeneGroups))
       Sys.sleep(2)
       # Mining Abstracts for Phenotypes
+      message("Searching abstracts for phenotypes")
       AbsPhen <- G2PMineR::PhenotypeLookeR(AbstractsStrings, IDs, Kingdom = "F", Add = NULL)
       if(nrow(AbsPhen) == 0)
       {
-        message("NO PHENOTYPES FOUND, BROADEN SEARCH TERMS")
+        stop("NO PHENOTYPES FOUND, BROADEN SEARCH TERMS")
       }else{
         # Analyzing genes, taxonomy, and phenotypes data
         #for species matches
         Sys.sleep(2)
+        message("Producing bar plots")
         SppBarPlotDF <- G2PMineR::MatchesBarPlotteR(AbstractsSpp$Species, AbstractsSpp$Matches,n = 25)
         #for genes matches
         Sys.sleep(2)
@@ -476,11 +586,18 @@ if(length(IDs) > 0)
 
         # Internal interrelatins network analysis
         #for species matches
+        message("Conducting internal network analyses")
         Sys.sleep(2)
         SppInt <- G2PMineR::InternalPairwiseDistanceInferreR(AbstractsSpp$Species,
                                                              AbstractsSpp$Matches,
                                                              allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
+        if(nrow(SppInt) > 1)
+        {
+          SppIntSmall <- G2PMineR::TopN_PickeR_Internal(SppInt, n = 50, decreasing = T)
+        }else{
+          SppIntSmall <- SppInt
+        }
         SppIntSmall <- G2PMineR::TopN_PickeR_Internal(SppInt, n = 50, decreasing = T)
         Sys.sleep(2)
         rwmsS <- as.dist(SppIntSmall, diag = F, upper = FALSE)
@@ -489,7 +606,12 @@ if(length(IDs) > 0)
         GenInt <- G2PMineR::InternalPairwiseDistanceInferreR(Genez[,1], Genez[,2],
                                                              allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        GenIntSmall <- G2PMineR::TopN_PickeR_Internal(GenInt, n = 50, decreasing = T)
+        if(nrow(GenInt) > 1)
+        {
+          GenIntSmall <- G2PMineR::TopN_PickeR_Internal(GenInt, n = 50, decreasing = T)
+        }else{
+          GenIntSmall <- GenInt
+        }
         Sys.sleep(2)
         rwmsG <- as.dist(GenIntSmall, diag = F, upper = FALSE)
         Sys.sleep(2)
@@ -498,20 +620,33 @@ if(length(IDs) > 0)
                                                               AbsPhen$AbsMatches,
                                                               allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        PhenIntSmall <- G2PMineR::TopN_PickeR_Internal(PhenInt, n = 100, decreasing = T)
+        if(nrow(PhenInt) > 1)
+        {
+          PhenIntSmall <- G2PMineR::TopN_PickeR_Internal(PhenInt, n = 100, decreasing = T)
+        }else{
+          PhenIntSmall <- PhenInt
+        }
         Sys.sleep(2)
         rwmsP <- as.dist(PhenIntSmall, diag = FALSE, upper = FALSE)
         Sys.sleep(2)
 
         # Linking genome to phenome (within a taxonomic framework)
         #Phenotypes vs Species
+        message("Performing bipartite analyses")
         PhenoSpecies <- G2PMineR::PairwiseDistanceInferreR(AbstractsSpp$Species,
                                                            AbstractsSpp$Matches,
                                                            AbsPhen$PhenoWord,
                                                            AbsPhen$AbsMatches,
                                                            allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        PhenoSpeciesSmall <- G2PMineR::TopN_PickeR(PhenoSpecies, n = 100, decreasing = T)
+        if(nrow(PhenoSpecies) > 1)
+        {
+          PhenoSpeciesSmall <- G2PMineR::TopN_PickeR(PhenoSpecies, n = 50, decreasing = T)
+        }else if(nrow(PhenoSpecies) == 1){
+          PhenoSpeciesSmall <- PhenoSpecies
+        }else if(nrow(PhenoSpecies) == 0){
+          stop("ERROR: No P2S Associations Found, broaden search terms, increase HowMany, or change Seed")
+        }
         Sys.sleep(2)
         #Genes vs Species
         GeneSpecies <- G2PMineR::PairwiseDistanceInferreR(AbstractsSpp$Species,
@@ -519,19 +654,38 @@ if(length(IDs) > 0)
                                                           Genez[,1], Genez[,2],
                                                           allabsnum = length(AbstractsStrings))
         Sys.sleep(2)
-        GeneSpeciesSmall <- G2PMineR::TopN_PickeR(GeneSpecies, n = 100, decreasing = T)
+        if(nrow(GeneSpecies) > 1)
+        {
+          GeneSpeciesSmall <- G2PMineR::TopN_PickeR(GeneSpecies, n = 50, decreasing = T)
+        }else if(nrow(GeneSpecies) == 1){
+          GeneSpeciesSmall <- GeneSpecies
+        }else if(nrow(GeneSpecies) == 0){
+          stop("ERROR: No G2S Associations Found, broaden search terms, increase HowMany, or change Seed")
+        }
         Sys.sleep(2)
         #Phenotypes vs Genes
         PhenoGenes <- G2PMineR::PairwiseDistanceInferreR(AbsPhen$PhenoWord,
                                                          AbsPhen$AbsMatches,
                                                          Genez[,1], Genez[,2],
                                                          allabsnum = length(AbstractsStrings))
+
         Sys.sleep(2)
-        PhenoGenesSmall <- G2PMineR::TopN_PickeR(PhenoGenes, n = 50, decreasing = T)
+        if(nrow(PhenoGenes) > 1)
+        {
+          PhenoGenesSmall <- G2PMineR::TopN_PickeR(PhenoGenes, n = 50, decreasing = T)
+        }else if(nrow(PhenoGenes) == 1){
+          PhenoGenesSmall <- PhenoGenes
+        }else if(nrow(PhenoGenes) == 0){
+          stop("ERROR: No G2P Associations Found, broaden search terms, increase HowMany, or change Seed")
+        }
         Sys.sleep(2)
         spmats <- ceiling(G2PMineR::AbstractsProportionCalculator(AbstractsSpp, IDs)*100)
         gnmats <- ceiling(G2PMineR::AbstractsProportionCalculator(GenesOut, IDs)*100)
         phmats <- ceiling(G2PMineR::AbstractsProportionCalculator(AbsPhen, IDs)*100)
+
+
+
+        message("Producing output")
         pdf("InterpretableResults.pdf")
         plot.new()
         text(0.3,1,"EasyG2PMineR Output")
@@ -567,7 +721,7 @@ if(length(IDs) > 0)
                        DoNotPlot=F,label.cex=0.4,title="Phenotypes Internal Relations")
         plot.new()
         text(0.3,1,"Bipartite Outputs")
-        bipartite::plotweb(PhenoGenesSmall, text.rot=90, col.interaction = "gray",
+         bipartite::plotweb(PhenoGenesSmall, text.rot=90, col.interaction = "gray",
                            labsize = 0.75, method='normal')
         text(0.05,1.78,"G2P")
         library(bipartite)
@@ -587,7 +741,7 @@ if(length(IDs) > 0)
 }else{
   message("NO ABSTRACTS FOUND, BROADEN SEARCH TERMS")
 }
+}
 
-  }
   options(warn=oldo)
 }

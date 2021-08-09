@@ -18,11 +18,17 @@ InternalPairwiseDistanceInferreR <- function(Things, Matches, allabsnum)
   rownames(PWDM) <- Things
   colnames(PWDM) <- Things
   print("...Calculating Pairwise Distances")
-  pb <- txtProgressBar(min = 1, max = nrow(PWDM), style = 3)
+  if(nrow(PWDM) > 1)
+  {
+    pb <- txtProgressBar(min = 1, max = nrow(PWDM), style = 3)
+  }
   #perform distance calculation
   for(i in 1:nrow(PWDM))
   {
-    setTxtProgressBar(pb, i)
+    if(nrow(PWDM) > 1)
+    {
+      setTxtProgressBar(pb, i)
+    }
     for(j in 1:ncol(PWDM))
     {
       #print(paste0("Row ",i," Column ",j))
@@ -87,11 +93,23 @@ InternalPairwiseDistanceInferreR <- function(Things, Matches, allabsnum)
   BadCols <- which(as.numeric(ColSumz) == 0)
   if(length(BadRows) > 0 && length(BadCols) > 0)
   {
+    cnomen <- colnames(PWDM)
+    cnomengood <- cnomen[-BadCols]
+    rnomen <- rownames(PWDM)
+    rnomengood <- rnomen[-BadRows]
     SmallOut <- as.data.frame(PWDM[-BadRows,-BadCols])
+    colnames(SmallOut) <- cnomengood
+    rownames(SmallOut) <- rnomengood
   }else if(length(BadRows) > 0 && length(BadCols) == 0){
+    rnomen <- rownames(PWDM)
+    rnomengood <- rnomen[-BadRows]
     SmallOut <- as.data.frame(PWDM[-BadRows,])
+    rownames(SmallOut) <- rnomengood
   }else if(length(BadRows) == 0 && length(BadCols) > 0){
+    cnomen <- colnames(PWDM)
+    cnomengood <- cnomen[-BadCols]
     SmallOut <- as.data.frame(PWDM[,-BadCols])
+    colnames(SmallOut) <- cnomengood
   }else{
     SmallOut <- PWDM
   }
