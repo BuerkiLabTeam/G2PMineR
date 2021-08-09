@@ -56,14 +56,15 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
     colnames(Add) <- colnames(SwissGenesCombo)
     SwissGenesCombo <- as.data.frame(rbind(SwissGenesCombo, Add))
   }
-  if(class(SppAbbr) != "character")
-  {
-    stop("ERROR: SppAbbr must be character!")
-  }
   if(length(SppAbbr) > 0)
   {
+    if(class(SppAbbr) != "character")
+    {
+      stop("ERROR: SppAbbr must be character!")
+    }
     TaxaCombos <- unique(SppAbbr)
   }else{
+    TaxaCombos <- "NONE"
     "NOITCE: User provided no SppAbbr, not performing isoform analysis!"
   }
   #coerce to right class
@@ -90,10 +91,16 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
   onestring <- paste(bigsstrings, collapse = " ")
   print("...Inferring Hypotheses of Genes In Abstracts")
   UniqueGeneNamesDets <- c(1:length(UniqueGeneNames))
-  pb <- txtProgressBar(min = 1, max = length(UniqueGeneNames), style = 3)
+  if(length(UniqueGeneNames) > 1)
+  {
+    pb <- txtProgressBar(min = 1, max = length(UniqueGeneNames), style = 3)
+  }
   for(i in 1:length(UniqueGeneNames))
   {
-    setTxtProgressBar(pb, i)
+    if(length(UniqueGeneNames) > 1)
+    {
+      setTxtProgressBar(pb, i)
+    }
     UniqueGeneNamesDets[i] <- grepl(tolower(as.character(UniqueGeneNames[i])), tolower(as.character(onestring)))
   }
   SwissGenesComboX <- SwissGenesCombo[which(UniqueGeneNamesDets == 1),]
@@ -118,10 +125,16 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
     ingenes <- c()
     insitus <- c()
     matches <- c()
-    pb <- txtProgressBar(min = 1, max = length(splitlist), style = 3)
+    if(length(splitlist) > 1)
+    {
+      pb <- txtProgressBar(min = 1, max = length(splitlist), style = 3)
+    }
     for(k in 1:length(splitlist))
     {
-      setTxtProgressBar(pb, k)
+      if(length(splitlist) > 1)
+      {
+        setTxtProgressBar(pb, k)
+      }
       strict <- as.character(splitlist[[k]]) %in% as.character(SwissGenesIn[i])
       if(T %in% strict)
       {
@@ -130,15 +143,18 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
         matches <- c(matches,AbstractIDs[k])
       }
       #now do for putative isoforms
-      Isoforms <- paste0(TaxaCombos,as.character(SwissGenesIn[i]))
-      for(m in 1:length(Isoforms))
+      if(TaxaCombos != "NONE")
       {
-        strict <- as.character(splitlist[[k]]) %in% as.character(Isoforms[m])
-        if(T %in% strict)
+        Isoforms <- paste0(TaxaCombos,as.character(SwissGenesIn[i]))
+        for(m in 1:length(Isoforms))
         {
-          ingenes <- c(ingenes,as.character(SwissGenesIn[i]))
-          insitus <- c(insitus,as.character(Isoforms[m]))
-          matches <- c(matches,AbstractIDs[k])
+          strict <- as.character(splitlist[[k]]) %in% as.character(Isoforms[m])
+          if(T %in% strict)
+          {
+            ingenes <- c(ingenes,as.character(SwissGenesIn[i]))
+            insitus <- c(insitus,as.character(Isoforms[m]))
+            matches <- c(matches,AbstractIDs[k])
+          }
         }
       }
     }
@@ -157,6 +173,6 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
       OutCombo[i,5] <- "No"
       OutCombo[i,6] <- "No"
     }
-  }
+    }
   return(OutCombo) #return output to main
 }
