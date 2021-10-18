@@ -667,7 +667,8 @@ if(length(IDs) > 0)
                            labsize = 0.75, method='normal')
         text(0.05,1.78,"G2P")
         dev.off()
-        write.csv(PhenoGenesSmall, "G2P_data.csv",row.names=F)
+        GenesOut_Simp <- as.data.frame(GenesOut[,c(1,5,6)])
+        write.csv(GenesOut_Simp, "G2P_data.csv",row.names=T)
       }
     }
   }else{
