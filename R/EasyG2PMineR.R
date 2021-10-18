@@ -226,44 +226,13 @@ if(length(IDs) > 0)
         text(0.5,0.5, sprintf("%s percent abstracts had gene matches",gnmats))
         text(0.5,0.4, sprintf("%s percent abstracts had phenotype matches",phmats))
         plot.new()
-        text(0.3,1,"Bar Plot Outputs")
-        barplot(SppBarPlotDF[!is.na(SppBarPlotDF[,2]),2],
-                names.arg = SppBarPlotDF[!is.na(SppBarPlotDF[,2]),1], las=2,
-                ylim = c(0,max(SppBarPlotDF[!is.na(SppBarPlotDF[,2]),2]) +
-                           ceiling(max(SppBarPlotDF[!is.na(SppBarPlotDF[,2]),2])*0.1)),
-                ylab = "Number of Abstracts",xlab="Species",cex.names=0.3)
-        barplot(GenesBarPlotDF[!is.na(GenesBarPlotDF[,2]),2],
-                names.arg = GenesBarPlotDF[!is.na(GenesBarPlotDF[,2]),1], las=2,
-                ylim = c(0,max(GenesBarPlotDF[!is.na(GenesBarPlotDF[,2]),2]) +
-                           ceiling(max(GenesBarPlotDF[!is.na(GenesBarPlotDF[,2]),2])*0.1)),
-                ylab = "Number of Abstracts",xlab="Genes",cex.names=0.3)
-        barplot(PhenoBarPlotDF[!is.na(PhenoBarPlotDF[,2]),2],
-                names.arg = PhenoBarPlotDF[!is.na(PhenoBarPlotDF[,2]),1], las=2,
-                ylim = c(0,max(PhenoBarPlotDF[!is.na(PhenoBarPlotDF[,2]),2]) +
-                           ceiling(max(PhenoBarPlotDF[!is.na(PhenoBarPlotDF[,2]),2])*0.1)),
-                ylab = "Number of Abstracts",xlab="Phenotypes",cex.names=0.3)
-        plot.new()
-        text(0.3,1,"Internal Web Outputs")
-        qgraph::qgraph(rwmsS, layout ="circle", labels =  gsub("_"," ",rownames(SppIntSmall)),
-                       DoNotPlot=F,label.cex=0.9,title="Species Internal Relations")
-        qgraph::qgraph(rwmsG, layout ="circle", labels = rownames(GenIntSmall),
-                       DoNotPlot=F,label.cex=0.4,title="Genes Internal Relations")
-        qgraph::qgraph(rwmsP, layout ="circle", labels = rownames(PhenIntSmall),
-                       DoNotPlot=F,label.cex=0.4,title="Phenotypes Internal Relations")
-        plot.new()
         text(0.3,1,"Bipartite Outputs")
-         bipartite::plotweb(PhenoGenesSmall, text.rot=90, col.interaction = "gray",
+        library(bipartite)
+        bipartite::plotweb(PhenoGenesSmall, text.rot=90, col.interaction = "gray",
                            labsize = 0.75, method='normal')
         text(0.05,1.78,"G2P")
-        library(bipartite)
-        bipartite::plotweb(GeneSpeciesSmall, text.rot=90, col.interaction = "gray",
-                           labsize = 0.75, method='normal')
-        text(0.05,1.78,"G2S")
-        bipartite::plotweb(PhenoSpeciesSmall, text.rot=90, col.interaction = "gray",
-                           labsize = 0.75, method='normal')
-
-        text(0.05,1.78,"P2S")
         dev.off()
+        write.csv(PhenoGenesSmall, "G2P_data.csv",row.names=F)
       }
     }
   }else{
