@@ -698,6 +698,7 @@ if(length(IDs) > 0)
                            labsize = 0.75, method='normal')
         text(0.05,1.78,"G2P")
         dev.off()
+        write.csv(PhenoGenesSmall, "G2P_data.csv",row.names=F)
       }
     }
   }else{
