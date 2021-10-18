@@ -64,10 +64,10 @@ SynonymReplaceR <- function(GenesOut, Kingdom)
     NewOutComboSmall <- as.data.frame(NewGenesOut[-which(NewGenesOut$Gene %in% tocombines),])
     if(length(tocombines) > 0)
     {
-      pb <- txtProgressBar(min = 1, max = length(tocombines), style = 3)
+      #pb <- txtProgressBar(min = 1, max = length(tocombines), style = 3)
       for(i in 1:length(tocombines))
       {
-      setTxtProgressBar(pb, i)
+      #setTxtProgressBar(pb, i)
       SmallOut <- as.data.frame(matrix(nrow=1,ncol=ncol(NewOutComboSmall)))
       colnames(SmallOut) <- colnames(NewOutComboSmall)
       tmp <- NewGenesOut[which(NewGenesOut$Gene == as.character(tocombines[i])),]
