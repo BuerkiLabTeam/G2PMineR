@@ -5,7 +5,7 @@
 #' @param n numeric: the number of words before and after anchors to search
 #' @param RemoveCommons boolean: remove common English words
 #' @export
-# Written by John M. A. Wojahn June 2020
+# Written by John M. A. Wojahn June 2020, Updated April 2022
 # This is Free and Open-Source Software (F.O.S.S.)
 # © J.M.A. Wojahn, S.J. Galla, A.E. Melton, S. Buerki
 # Provided under the GNU Affero General Public License v. 3
@@ -80,7 +80,7 @@ AroundWordsSearcheR <- function(AbstractStrings,IDs,Anchors,n,RemoveCommons)
 	    for(j in 1:length(GoodAnchors)) #for each anchor in abstract
 	    {
 	      print(sprintf(".....Processing Good Anchor No. %s of %s",j,length(GoodAnchors)))
-	      AnchorMatches <- grep(gsub("_"," ",GoodAnchors[j]),splits) #get matches
+	      AnchorMatches <- grep(gsub("-","",gsub("_"," ",GoodAnchors[j])),splits) #get matches
 	      if(length(AnchorMatches) != 0)
 	      {
 	        NEGOUT <- c() #littleoutputvec
