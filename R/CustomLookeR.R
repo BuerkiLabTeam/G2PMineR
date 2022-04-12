@@ -3,7 +3,7 @@
 #' @param IDs character or numeric vector: unique abstract IDs
 #' @param CustomWords character vector: user terms to use for search library
 #' @param CustomCategories character vector: user categories to use for search library
-# Written by John M. A. Wojahn December 2020, Updated April 2022
+# Written by John M. A. Wojahn December 2020
 # This is Free and Open-Source Software (F.O.S.S.)
 # © J.M.A. Wojahn, S.J. Galla, A.E. Melton, S. Buerki
 # Provided under the GNU Affero General Public License v. 3
@@ -120,8 +120,8 @@ CustomLookeR <- function(AbstractStrings, IDs, CustomWords, CustomCategories)
         inabstermz[d] <- as.character(paste(tmp, collapse = ""))
       }
       invisible(capture.output(AWds <- G2PMineR::AroundWordsSearcheR(as.character(PhenOUT[i,2]),as.character(PhenOUT[i,1]),Anchors = inabstermz,n=1,RemoveCommons = T)))
-      PhenOUT[i,4] <- AWds$WordsAroundForward <- gsub(",;,",";",AWds$WordsAroundForward)
-      PhenOUT[i,5] <- AWds$WordsAroundBackwards <- gsub(",;,",";",AWds$WordsAroundBackwards)
+      PhenOUT[i,4] <-  gsub(",;,",";",AWds$WordsAroundForward)
+      PhenOUT[i,5] <-  gsub(",;,",";",AWds$WordsAroundBackwards)
     }
   }
   #infer stats for each around word bigram and choose 3 commonest
@@ -207,16 +207,10 @@ CustomLookeR <- function(AbstractStrings, IDs, CustomWords, CustomCategories)
     key <- data.frame(CustomWords, CustomCategories)
     categories <- as.data.frame(matrix(nrow=nrow(coocs),ncol=1))
     print("ASSIGNING CATEGORIES")
-    if(nrow(coocs) > 1)
-    {
-      pb <- txtProgressBar(min = 1, max = nrow(coocs), style = 3)
-    }
+    pb <- txtProgressBar(min = 1, max = nrow(coocs), style = 3)
     for(i in 1:nrow(coocs))
     {
-      if(nrow(coocs) > 1)
-      {
-        setTxtProgressBar(pb, i)
-      }
+      setTxtProgressBar(pb, i)
       category <- paste(unique(key[which(key$CustomWords == coocs[i,1]),2]),collapse = ";")
       categories[i,1] <- category
     }
