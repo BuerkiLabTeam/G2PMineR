@@ -1,223 +1,147 @@
-#' Extracts Custom Words From Abstracts
-#' @param AbstractStrings character vector: of abstracts as strings
-#' @param IDs character or numeric vector: unique abstract IDs
-#' @param CustomWords character vector: user terms to use for search library
-#' @param CustomCategories character vector: user categories to use for search library
-# Written by John M. A. Wojahn December 2020
-# This is Free and Open-Source Software (F.O.S.S.)
-# © J.M.A. Wojahn, S.J. Galla, A.E. Melton, S. Buerki
-# Provided under the GNU Affero General Public License v. 3
-# Funded by EPSCoR GEM3 at Boise State University
-
-CustomLookeR <- function(AbstractStrings, IDs, CustomWords, CustomCategories)
+GenuswiseLookeR <- function(genz,use_partial,key)
 {
-  if(class(AbstractStrings) != "character")
+  if(ncol(genz) != 3)
   {
-    stop("ERROR: AbstractStrings must be a character vector!")
+    stop("ERROR: genz must have three columns, first is family, second is genus, third is number of species per genus")
   }
-  if(class(IDs) != "character" && class(IDs) != "numeric")
+  if(typeof(use_partial) != "logical")
   {
-    stop("ERROR: IDs must be a character or numeric vector!")
+    stop("ERROR: use_partial must be either T or F")
   }
-  if(length(AbstractStrings) != length(IDs))
+  if(nrow(genz) == 0)
   {
-    stop("ERROR: Your AbstractIDs and IDs must be the same length!")
+    stop("ERROR: genz must have at least one row")
   }
-  if(class(CustomWords) != "character")
+  rentrez::set_entrez_key(as.character(key))
+  OUT <- as.data.frame(matrix(nrow=0,ncol=9))
+  colnames(OUT) <- c("Family","Genus","PubMedID","GenBankIDs","NumTaxa","ListOfTaxa","Dated","Abstract","FullPaperLinks")
+  filez <- list.files()
+  if("OUT_partial.csv" %in% filez)
   {
-    stop("ERROR: CustomWords must be a character vector!")
-  }
-  if(is.null(CustomCategories) == F)
-  {
-    if(class(CustomCategories) != "character")
+    if(use_partial == T)
     {
-      stop("ERROR: CustomCategories must be a character vector!")
-    }
-    if(length(CustomCategories) != length(CustomWords))
-    {
-      stop("ERROR: Your CustomWords and CustomCategories must be the same length!")
-    }
-  }else{
-    print("USER HAS CHOSEN 'NO CATEGORIES' OPTION")
-  }
-  require(G2PMineR)
-  # reduce possible matches
-  MoBotTerms <- as.vector(CustomWords)
-  AbstractsStrings <- as.vector(AbstractStrings)
-  PhenOUT <- as.data.frame(matrix(nrow=length(AbstractsStrings),ncol=5))
-  colnames(PhenOUT) <- c("IDs","Strings","PhenoWords","ForwardPhenoArounds","BackwardsPhenoArounds")
-  PhenOUT[,1] <- IDs
-  PhenOUT[,2] <- AbstractsStrings
-  AllAbs <- tolower(paste(AbstractsStrings, collapse = " "))
-  GoodMoBotTerms <- c()
-  #sieve out the phenotypes that occur in no abstracts
-  print("PRE-PROCESSING CUSTOM TERMS")
-  pb <- txtProgressBar(min = 1, max = length(MoBotTerms), style = 3)
-  for(i in 1:length(MoBotTerms))
-  {
-    setTxtProgressBar(pb, i)
-    if(grepl(MoBotTerms[i], AllAbs))
-    {
-      GoodMoBotTerms <- c(GoodMoBotTerms,as.character(MoBotTerms[i]))
+      message("Using partial results")
+      OUT <- read.csv("OUT_partial.csv")
     }
   }
-  if(is.null(GoodMoBotTerms))
+  if(use_partial == T)
   {
-    return(NULL)
-  }
-  #extract phenotypes from abstracts
-  print("PROCESSING ABSTRACTS")
-  if(nrow(PhenOUT) > 1)
-  {
-    pb <- txtProgressBar(min = 1, max = nrow(PhenOUT), style = 3)
-  }
-  for(i in 1:nrow(PhenOUT))
-  {
-    if(nrow(PhenOUT) > 1)
+    if(length(unique(OUT$Genus))+1 < nrow(genz))
     {
-      setTxtProgressBar(pb, i)
-    }
-    inabstermz <- c()
-    for(j in 1:length(GoodMoBotTerms))
-    {
-      if(grepl(" ",GoodMoBotTerms[j]))
-      {
-        if(grepl(GoodMoBotTerms[j],tolower(as.character(PhenOUT[i,2]))))
-        {
-          inabstermz <- c(inabstermz, as.character(GoodMoBotTerms[j]))
-        }
-      }else{
-        bloog <- gsub("\\.","",as.character(PhenOUT[i,2]))
-        bloog <- gsub(",","",bloog)
-        bloog <- gsub(":","",bloog)
-        bloog <- gsub(";","",bloog)
-        tmp <- as.vector(unlist(strsplit(bloog, split = " ")))
-        if(GoodMoBotTerms[j] %in% tmp)
-        {
-          inabstermz <- c(inabstermz, as.character(GoodMoBotTerms[j]))
-        }
-      }
-    }
-    #get around words for each phenotype match in each abstract
-    if(is.null(inabstermz))
-    {
-      PhenOUT[i,3] <- "NO MATCHES"
-      PhenOUT[i,4] <- "NO MATCHES"
-      PhenOUT[i,5] <- "NO MATCHES"
+      numzz <- length(unique(OUT$Genus))+1:nrow(genz)
     }else{
-      PhenOUT[i,3] <- paste(inabstermz, collapse = "@")
-      for(d in 1:length(inabstermz))
-      {
-        tmp <- as.vector(unlist(strsplit(as.character(inabstermz[d]), split = "")))
-        if(tmp[1] == " ")
-        {
-          tmp <- tmp[-1]
-        }
-        if(tmp[length(tmp)] == " ")
-        {
-          tmp <- tmp[-length(tmp)]
-        }
-        inabstermz[d] <- as.character(paste(tmp, collapse = ""))
-      }
-      invisible(capture.output(AWds <- G2PMineR::AroundWordsSearcheR(as.character(PhenOUT[i,2]),as.character(PhenOUT[i,1]),Anchors = inabstermz,n=1,RemoveCommons = T)))
-      PhenOUT[i,4] <-  gsub(",;,",";",AWds$WordsAroundForward)
-      PhenOUT[i,5] <-  gsub(",;,",";",AWds$WordsAroundBackwards)
+      stop("Already done! If you want to redo, please set use_partial = F")
     }
-  }
-  #infer stats for each around word bigram and choose 3 commonest
-  PhenOUT <- PhenOUT[!(PhenOUT$PhenoWords == "NO MATCHES"),]
-  matchers <- as.vector(unlist(strsplit(PhenOUT[,3],spli = "@")))
-  mtab <- as.data.frame(table(matchers))
-  mtab <- as.data.frame(mtab[order(mtab[,2], decreasing = T),])
-  coocs <- as.data.frame(matrix(nrow=nrow(mtab),ncol=6))
-  colnames(coocs) <- c("PhenoWord","NumberAbs","1stWordPair","2ndWordPair","3rdWordPair","AbsMatches")
-  coocs[,1] <- as.character(mtab[,1])
-  coocs[,2] <- as.character(mtab[,2])
-  for(g in 1:nrow(coocs))
-  {
-    coocs[g,6] <- paste(PhenOUT[grep(coocs[g,1], PhenOUT[,3]),1], collapse = ",")
-  }
-  if(nrow(coocs) > 1)
-  {
-    pb <- txtProgressBar(min = 1, max = nrow(coocs), style = 3)
-  }
-  for(i in 1:nrow(coocs))
-  {
-    if(nrow(coocs) > 1)
-    {
-      setTxtProgressBar(pb, i)
-    }
-    PW <- as.vector(PhenOUT[grep(coocs[i,1],PhenOUT[,3]),3])
-    whchWrd <- c(1:length(PW))
-    whchWrd[1:length(PW)] <- NA
-    for(j in 1:length(PW))
-    {
-      goo <- as.vector(unlist(strsplit(PW[j], split = "@")))
-      if((T %in% (goo %in% coocs[i,1])) == F)
-      {
-        whchWrd[j] <- "BAD"
-      }else{
-        whchWrd[j] <- paste(which(goo %in% coocs[i,1]), collapse = ",")
-      }
-    }
-    Badz <- grep("BAD",whchWrd)
-    if(T %in% grepl("BAD",whchWrd))
-    {
-      whchWrd <- whchWrd[-Badz]
-    }
-    FD <- PhenOUT[grep(coocs[i,1],PhenOUT[,3]),4]
-    if(T %in% grepl("BAD",whchWrd))
-    {
-      FD <- FD[-Badz]
-    }
-    FDSplits <- c()
-    for(j in 1:length(FD))
-    {
-      goo <- as.vector(unlist(strsplit(FD[j], split = "@")))
-      floop <- unique(as.vector(unlist(strsplit(goo[as.numeric(as.vector(unlist(strsplit(as.character(whchWrd[j]),split = ","))))], split = ";"))))
-      floop <- floop[!(floop == "END_OF_SENTENCE")]
-      floop <- floop[!(floop == "START_OF_SENTENCE")]
-      FDSplits <- c(FDSplits, floop)
-    }
-    BD <- PhenOUT[grep(coocs[i,1],PhenOUT[,3]),5]
-    if(T %in% grepl("BAD",whchWrd))
-    {
-      BD <- BD[-Badz]
-    }
-    BDSplits <- c()
-    for(j in 1:length(BD))
-    {
-      goo <- as.vector(unlist(strsplit(BD[j], split = "@")))
-      floop <- as.vector(unlist(strsplit(goo[as.numeric(as.vector(unlist(strsplit(as.character(whchWrd[j]),split = ","))))], split = ";")))
-      floop <- floop[!(floop == "END_OF_SENTENCE")]
-      floop <- floop[!(floop == "START_OF_SENTENCE")]
-      BDSplits <- c(BDSplits, floop)
-    }
-    FDSplits <- paste0(FDSplits, " ", as.character(coocs[i,1]))
-    BDSplits <- paste0(as.character(coocs[i,1]), " ",BDSplits)
-    AllSplits <- c(FDSplits,BDSplits)
-    Alltab <- as.data.frame(table(AllSplits))
-    Alltab <- Alltab[order(Alltab[,2], decreasing = T),]
-    coocs[i,3] <- as.character(Alltab[1,1])
-    coocs[i,4] <- as.character(Alltab[2,1])
-    coocs[i,5] <- as.character(Alltab[3,1])
-  }
-  if(is.null(CustomCategories) == F)
-  {
-    key <- data.frame(CustomWords, CustomCategories)
-    categories <- as.data.frame(matrix(nrow=nrow(coocs),ncol=1))
-    print("ASSIGNING CATEGORIES")
-    pb <- txtProgressBar(min = 1, max = nrow(coocs), style = 3)
-    for(i in 1:nrow(coocs))
-    {
-      setTxtProgressBar(pb, i)
-      category <- paste(unique(key[which(key$CustomWords == coocs[i,1]),2]),collapse = ";")
-      categories[i,1] <- category
-    }
-    OUT <- as.data.frame(cbind(categories,coocs))
-    colnames(OUT) <- c("Category","CustomWord","NumberAbs","1stWordPair","2ndWordPair","3rdWordPair","AbsMatches")
-    return(OUT)
   }else{
-    return(coocs)
+    numzz <- 1:nrow(genz)
+  }
+  for(i in numzz)
+  {
+    message(sprintf("Processing Genus No. %s of %s",i,nrow(genz)))
+    NumGenBankTot <- rentrez::entrez_search("nucleotide",sprintf("%s [Organism]",genz[i,2]),limit=10000,retmax=10000)
+    #print number genbank seqs
+    if(NumGenBankTot[["count"]] > 0.25*genz[i,3])
+    {
+      PubMedIDz <- rentrez::entrez_search("PubMed",sprintf("phylogeny AND phylogenetics AND %s",genz[i,2]),limit=10000)
+      PubMedIDz <- PubMedIDz$ids
+      tobind <- as.data.frame(matrix(nrow=length(PubMedIDz),ncol=9))
+      colnames(tobind) <- c("Family","Genus","PubMedID","GenBankIDs","NumTaxa","ListOfTaxa","Dated","Abstract","FullPaperLinks")
+      tobind$Family <- genz[i,1]
+      tobind$Genus <- genz[i,2]
+      tobind$PubMedID <- PubMedIDz
+      #AbstractsStrings <- G2PMineR::AbstractsGetteR(PubMedIDz)
+      #tobind$Abstract <- AbstractsStrings
+      GenBankIDzAll <- c()
+      for(j in 1:length(PubMedIDz))
+      {
+        message(sprintf("Processing PubMed No. %s of %s",j,length(PubMedIDz)))
+        AbstractsStrings <- G2PMineR::AbstractsGetteR(PubMedIDz[j])
+        tobind[j,8] <- AbstractsStrings
+        paper_links <- paste(unlist(rentrez::linkout_urls(rentrez::entrez_link(dbfrom="pubmed", id=PubMedIDz[j], cmd="llinks"))),collapse="  ;  ")
+        tobind[j,9] <- paper_links
+        them <- RISmed::EUtilsGet(as.numeric(PubMedIDz[j]),type="efetch",db="pubmed")
+        title <- them@ArticleTitle
+        GenBankIDz <- rentrez::entrez_search("nucleotide",title,limit=10000)
+        GenBankIDz <- GenBankIDz[["ids"]]
+        tobind[j,4] <- paste(GenBankIDz,collapse=",")
+        GenBankIDzAll <- c(GenBankIDzAll,GenBankIDz)
+        CustomWords <- c("dated","BEAST","fossil","calibrated","time-calibrated","diversification","trait-diversification")
+        CustomCategories <- NULL
+        minedz <- G2PMineR::CustomLookeR(AbstractsStrings,1,CustomWords,CustomCategories)
+        if(is.null(minedz))
+        {
+          print("Likely Not Dated")
+          tobind[j,7] <- "No"
+        }else{
+          print("Likely Dated")
+          tobind[j,7] <- paste(unique(minedz$PhenoWord),collapse=",")
+        }
+      }
+      if(length(GenBankIDzAll) > 0)
+      {
+        for(q in 1:length(PubMedIDz))
+        {
+          taxa <- c()
+          message(sprintf("Processing PubMed No. %s of %s",q,length(PubMedIDz)))
+          GenBankIDzSplitz <- unlist(strsplit(tobind[q,4],split=","))
+          if(length(GenBankIDzSplitz) == 0)
+          {
+            print("No GenBankIDs Found, moving on...")
+            tobind[q,5] <- 0
+            tobind[q,6] <- "None"
+          }else{
+            message(sprintf("Found %s GenBankIDs",length(GenBankIDzSplitz)))
+            for(l in 1:length(GenBankIDzSplitz))
+            {
+              Sys.sleep(0.34)
+              message(sprintf("Processing PubMed No. %s of %s; GenBank No. %s of %s",q,length(PubMedIDz),l,length(GenBankIDzSplitz)))
+              thisacc <- NULL
+              countr <- 1
+              while(is.null(thisacc))
+              {
+                message(sprintf("EUtils atttempt No. %s of 5",countr))
+                countr <- countr + 1
+                if(countr == 5){break}
+                tryCatch({
+                  thisacc <- RISmed::EUtilsGet(GenBankIDzSplitz[l],db="nucleotide")
+                }, error=function(e){})
+              }
+              if(!is.null(thisacc))
+              {
+                message("EUtils suceeded!")
+                taxon <- thisacc[["GBSeq"]][["GBSeq_organism"]][[1]]
+                taxa <- c(taxa,taxon)
+              }else{
+                message("EUtilsGet failed 5 times, may be corrupted, moving on...")
+              }
+            }
+            taxa <- taxa[grepl(genz[i,2],taxa)]
+            if(length(taxa) == 0)
+            {
+              tobind[q,5] <- 0
+              tobind[q,6] <- "None"
+            }else{
+              tobind[q,5] <- length(unique(taxa))
+              tobind[q,6] <- paste(unique(taxa),collapse=",")
+            }
+          }
+        }
+      }else{
+        tobind[,5] <- "None"
+        tobind[,6] <- "None"
+      }
+    }else{
+      tobind <- as.data.frame(matrix(nrow=length(PubMedIDz),ncol=9))
+      colnames(tobind) <- c("Family","Genus","PubMedID","GenBankIDs","NumTaxa","ListOfTaxa","Dated","Abstract","FullPaperLinks")
+      tobind[1,] <- "Fewer than 25% Genus"
+      tobind[1,1] <- genz[i,1]
+      tobind[1,2] <- genz[i,2]
+    }
+    OUT <- rbind(OUT,tobind)
+    write.csv(OUT,"OUT_partial.csv",row.names=F)
+    if(i == nrow(genz))
+    {
+      write.csv(OUT,"OUT_final.csv",row.names=F)
+    }
   }
 }
