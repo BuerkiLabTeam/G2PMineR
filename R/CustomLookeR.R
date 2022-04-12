@@ -3,7 +3,7 @@
 #' @param IDs character or numeric vector: unique abstract IDs
 #' @param CustomWords character vector: user terms to use for search library
 #' @param CustomCategories character vector: user categories to use for search library
-# Written by John M. A. Wojahn December 2020
+# Written by John M. A. Wojahn December 2020, Updated April 2022
 # This is Free and Open-Source Software (F.O.S.S.)
 # © J.M.A. Wojahn, S.J. Galla, A.E. Melton, S. Buerki
 # Provided under the GNU Affero General Public License v. 3
@@ -61,12 +61,22 @@ CustomLookeR <- function(AbstractStrings, IDs, CustomWords, CustomCategories)
       GoodMoBotTerms <- c(GoodMoBotTerms,as.character(MoBotTerms[i]))
     }
   }
+  if(is.null(GoodMoBotTerms))
+  {
+    return(NULL)
+  }
   #extract phenotypes from abstracts
   print("PROCESSING ABSTRACTS")
-  pb <- txtProgressBar(min = 1, max = nrow(PhenOUT), style = 3)
+  if(nrow(PhenOUT) > 1)
+  {
+    pb <- txtProgressBar(min = 1, max = nrow(PhenOUT), style = 3)
+  }
   for(i in 1:nrow(PhenOUT))
   {
-    setTxtProgressBar(pb, i)
+    if(nrow(PhenOUT) > 1)
+    {
+      setTxtProgressBar(pb, i)
+    }
     inabstermz <- c()
     for(j in 1:length(GoodMoBotTerms))
     {
@@ -127,10 +137,16 @@ CustomLookeR <- function(AbstractStrings, IDs, CustomWords, CustomCategories)
   {
     coocs[g,6] <- paste(PhenOUT[grep(coocs[g,1], PhenOUT[,3]),1], collapse = ",")
   }
-  pb <- txtProgressBar(min = 1, max = nrow(coocs), style = 3)
+  if(nrow(coocs) > 1)
+  {
+    pb <- txtProgressBar(min = 1, max = nrow(coocs), style = 3)
+  }
   for(i in 1:nrow(coocs))
   {
-    setTxtProgressBar(pb, i)
+    if(nrow(coocs) > 1)
+    {
+      setTxtProgressBar(pb, i)
+    }
     PW <- as.vector(PhenOUT[grep(coocs[i,1],PhenOUT[,3]),3])
     whchWrd <- c(1:length(PW))
     whchWrd[1:length(PW)] <- NA
