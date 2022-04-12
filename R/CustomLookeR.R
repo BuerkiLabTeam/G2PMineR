@@ -207,10 +207,16 @@ CustomLookeR <- function(AbstractStrings, IDs, CustomWords, CustomCategories)
     key <- data.frame(CustomWords, CustomCategories)
     categories <- as.data.frame(matrix(nrow=nrow(coocs),ncol=1))
     print("ASSIGNING CATEGORIES")
-    pb <- txtProgressBar(min = 1, max = nrow(coocs), style = 3)
+    if(nrow(coocs) > 1)
+    {
+      pb <- txtProgressBar(min = 1, max = nrow(coocs), style = 3)
+    }
     for(i in 1:nrow(coocs))
     {
-      setTxtProgressBar(pb, i)
+      if(nrow(coocs) > 1)
+      {
+        setTxtProgressBar(pb, i)
+      }
       category <- paste(unique(key[which(key$CustomWords == coocs[i,1]),2]),collapse = ";")
       categories[i,1] <- category
     }
