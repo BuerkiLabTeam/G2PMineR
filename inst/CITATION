@@ -2,7 +2,7 @@ citHeader("To cite G2PMineR in a publication please use:")
 
 citEntry(entry="Article",
         title = "G2PMineR: A Genome to Phenome Literature Review Approach",
-        author = "Wojahn, J., Galla, S. J., Melton, A. E., & Buerki, S."
+        author = "Wojahn, J., Galla, S. J., Melton, A. E., & Buerki, S.",
 	journal = "Genes",
   	year = "2021",
 	volume = "12",
