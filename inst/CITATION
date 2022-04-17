@@ -1,0 +1,11 @@
+citHeader("To cite G2PMineR in a publication please use:")
+
+citEntry(entry="Article",
+	title = "G2PMineR: A Genome to Phenome Literature Review Approach",
+        author = personList(as.person("J.M.A. Wojahn"), as.person("S.J. Galla"), as.person("A.E. Melton), as.person("S. Buerki")),
+	journal = "Genes",
+  	year = "2021",
+	volume = "12",
+	pages = "293",
+
+        textVersion = "Wojahn, J., Galla, S. J., Melton, A. E., & Buerki, S. (2021). G2PMineR: A Genome to Phenome Literature Review Approach. Genes, 12(2), 293. https://doi.org/10.3390/genes12020293")
