@@ -529,7 +529,7 @@ if(length(IDs) > 0)
       Sys.sleep(2)
       # Mining Abstracts for Phenotypes
       message("Searching abstracts for phenotypes")
-      AbsPhen <- G2PMineR::PhenotypeLookeR(AbstractsStrings, IDs, Kingdom = "F", Add = NULL)
+      AbsPhen <- G2PMineR::PhenotypeLookeR(AbstractsStrings, IDs, Kingdom = "F", Add = "antibiotic")
       if(nrow(AbsPhen) == 0)
       {
         stop("NO PHENOTYPES FOUND, BROADEN SEARCH TERMS")
