@@ -56,6 +56,7 @@ PhenotypeLookeR <- function(AbstractStrings, IDs, Kingdom, Add)
   }
   # reduce possible matches
   MoBotTerms <- as.vector(MoBotTerms[,1])
+  MoBotTerms <- iconv(MoBotTerms, "ASCII", "UTF-8", sub="")
   MoBotTerms <- tolower(MoBotTerms)
   AbstractsStrings <- as.vector(AbstractStrings)
   PhenOUT <- as.data.frame(matrix(nrow=length(AbstractsStrings),ncol=5))
