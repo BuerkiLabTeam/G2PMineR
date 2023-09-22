@@ -35,12 +35,12 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
   require(G2PMineR)
   if(Kingdom == "P")
   {
-    print("Using Plantae Internal Data")
+    message("Using Plantae Internal Data")
   }else if(Kingdom == "A"){
-    print("Using Animalia Internal Data")
+    message("Using Animalia Internal Data")
     SwissGenesCombo <- AnimalSwissGenesCombo
   }else if(Kingdom == "F"){
-    print("Using Fungi Internal Data")
+    message("Using Fungi Internal Data")
     SwissGenesCombo <- FungiSwissGenesCombo
   }else{
     stop("ERROR: You need to choose a kingdom!")
@@ -51,7 +51,7 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
     {
       stop("ERROR: If not NULL, Add must be a data.frame of three columns!")
     }
-    print("Adding user terms to library")
+    message("Adding user terms to library")
     Add <- as.data.frame(Add)
     colnames(Add) <- colnames(SwissGenesCombo)
     SwissGenesCombo <- as.data.frame(rbind(SwissGenesCombo, Add))
@@ -89,7 +89,7 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
   tmp <- gsub(";","",tolower(tmp))
   bigsstrings <- unique(as.vector(unlist(strsplit((tmp), split = " "))))
   onestring <- paste(bigsstrings, collapse = " ")
-  print("...Inferring Hypotheses of Genes In Abstracts")
+  message("...Inferring Hypotheses of Genes In Abstracts")
   UniqueGeneNamesDets <- c(1:length(UniqueGeneNames))
   if(length(UniqueGeneNames) > 1)
   {
@@ -143,7 +143,7 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
         matches <- c(matches,AbstractIDs[k])
       }
       #now do for putative isoforms
-      if(TaxaCombos != "NONE")
+      if(!("NONE" %in% TaxaCombos))
       {
         Isoforms <- paste0(TaxaCombos,as.character(SwissGenesIn[i]))
         for(m in 1:length(Isoforms))
