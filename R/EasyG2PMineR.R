@@ -83,14 +83,17 @@ if(length(IDs) > 0)
       stop("NO GENES FOUND, BROADEN SEARCH TERMS")
     }else{
       Sys.sleep(2)
-      GenesOut <- G2PMineR::SynonymReplaceR(GenesOut, Kingdom = "P")
-      #to create artificial gene groups
-      Sys.sleep(2)
-      GeneGroups <- G2PMineR::GeneNamesGroupeR(as.vector(GenesOut[,1]))
-      #to grade the usefulness of matches
-      Sys.sleep(2)
-      GeneGrades <- G2PMineR::UtilityGradeR(GenesOut, Kingdom = "P", Add = NULL, Groups=as.data.frame(GeneGroups))
-      Sys.sleep(2)
+      if(F %in% (unique(GenesOut[,2]) == "No"))
+      {
+        GenesOut <- G2PMineR::SynonymReplaceR(GenesOut, Kingdom = "P")
+        #to create artificial gene groups
+        Sys.sleep(2)
+        GeneGroups <- G2PMineR::GeneNamesGroupeR(as.vector(GenesOut[,1]))
+        #to grade the usefulness of matches
+        Sys.sleep(2)
+        GeneGrades <- G2PMineR::UtilityGradeR(GenesOut, Kingdom = "P", Add = NULL, Groups=as.data.frame(GeneGroups))
+        Sys.sleep(2)
+      }
       # Mining Abstracts for Phenotypes
       message("Searching abstracts for phenotypes")
       AbsPhen <- G2PMineR::PhenotypeLookeR(AbstractsStrings, IDs, Kingdom = "P", Add = NULL)
@@ -286,14 +289,17 @@ if(length(IDs) > 0)
       stop("NO GENES FOUND, BROADEN SEARCH TERMS")
     }else{
       Sys.sleep(2)
-      GenesOut <- G2PMineR::SynonymReplaceR(GenesOut, Kingdom = "A")
-      #to create artificial gene groups
-      Sys.sleep(2)
-      GeneGroups <- G2PMineR::GeneNamesGroupeR(as.vector(GenesOut[,1]))
-      #to grade the usefulness of matches
-      Sys.sleep(2)
-      GeneGrades <- G2PMineR::UtilityGradeR(GenesOut, Kingdom = "A", Add = NULL, Groups=as.data.frame(GeneGroups))
-      Sys.sleep(2)
+      if(F %in% (unique(GenesOut[,2]) == "No"))
+      {
+        GenesOut <- G2PMineR::SynonymReplaceR(GenesOut, Kingdom = "A")
+        #to create artificial gene groups
+        Sys.sleep(2)
+        GeneGroups <- G2PMineR::GeneNamesGroupeR(as.vector(GenesOut[,1]))
+        #to grade the usefulness of matches
+        Sys.sleep(2)
+        GeneGrades <- G2PMineR::UtilityGradeR(GenesOut, Kingdom = "A", Add = NULL, Groups=as.data.frame(GeneGroups))
+        Sys.sleep(2)
+      }
       # Mining Abstracts for Phenotypes
       message("Searching abstracts for phenotypes")
       AbsPhen <- G2PMineR::PhenotypeLookeR(AbstractsStrings, IDs, Kingdom = "A", Add = NULL)
@@ -519,14 +525,17 @@ if(length(IDs) > 0)
       stop("NO GENES FOUND, BROADEN SEARCH TERMS")
     }else{
       Sys.sleep(2)
-      GenesOut <- G2PMineR::SynonymReplaceR(GenesOut, Kingdom = "F")
-      #to create artificial gene groups
-      Sys.sleep(2)
-      GeneGroups <- G2PMineR::GeneNamesGroupeR(as.vector(GenesOut[,1]))
-      #to grade the usefulness of matches
-      Sys.sleep(2)
-      GeneGrades <- G2PMineR::UtilityGradeR(GenesOut, Kingdom = "F", Add = NULL, Groups=as.data.frame(GeneGroups))
-      Sys.sleep(2)
+      if(F %in% (unique(GenesOut[,2]) == "No"))
+      {
+        GenesOut <- G2PMineR::SynonymReplaceR(GenesOut, Kingdom = "F")
+        #to create artificial gene groups
+        Sys.sleep(2)
+        GeneGroups <- G2PMineR::GeneNamesGroupeR(as.vector(GenesOut[,1]))
+        #to grade the usefulness of matches
+        Sys.sleep(2)
+        GeneGrades <- G2PMineR::UtilityGradeR(GenesOut, Kingdom = "F", Add = NULL, Groups=as.data.frame(GeneGroups))
+        Sys.sleep(2)
+      }
       # Mining Abstracts for Phenotypes
       message("Searching abstracts for phenotypes")
       AbsPhen <- G2PMineR::PhenotypeLookeR(AbstractsStrings, IDs, Kingdom = "F", Add = "antibiotic")
