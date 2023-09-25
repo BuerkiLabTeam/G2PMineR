@@ -11,6 +11,7 @@
 
 SynonymReplaceR <- function(GenesOut, Kingdom)
 {
+
   require(G2PMineR)
 
   if(Kingdom == "P")
@@ -22,6 +23,9 @@ SynonymReplaceR <- function(GenesOut, Kingdom)
   }else if(Kingdom == "F"){
     print("Using Fungi Internal Data")
     GeneSynonymyKey <- FungiGeneSynonymyKey
+  }else if(Kingdom == "H"){
+    message("Using Human Internal Data")
+    GeneSynonymyKey <- HumanGeneSynonymyKey
   }else{
     stop("ERROR: You need to choose a kingdom!")
   }
@@ -40,6 +44,10 @@ SynonymReplaceR <- function(GenesOut, Kingdom)
     if(as.character(GenesOut[i,1]) %in% GeneSynonymyKey$Synonyms)
     {
       AcceptedNomen <- as.character(GeneSynonymyKey[(GeneSynonymyKey$Synonyms == as.character(GenesOut[i,1])),2])
+      if(length(AcceptedNomen) > 1)
+      {
+        AcceptedNomen <- sprintf("AMBIGUOUS SYNONYM: %s",paste(AcceptedNomen, collapse = " or "))
+      }
       NewGenesOutSmall[1,1] <- AcceptedNomen
       NewGenesOutSmall[1,2] <- as.character(GenesOut[i,2])
       NewGenesOutSmall[1,3] <- as.character(GenesOut[i,3])
@@ -84,5 +92,5 @@ SynonymReplaceR <- function(GenesOut, Kingdom)
     NewOutComboSmall <- GenesOut
   }
   return(NewOutComboSmall)
-}
+  }
 
