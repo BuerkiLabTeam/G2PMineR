@@ -13,7 +13,7 @@
 
 GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
 {
-  #check classes
+ #check classes
   if(class(AbstractStrings) != "character")
   {
     stop("ERROR: AbstractStrings must be a character vector!")
@@ -42,6 +42,9 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
   }else if(Kingdom == "F"){
     message("Using Fungi Internal Data")
     SwissGenesCombo <- FungiSwissGenesCombo
+  }else if(Kingdom == "H"){
+    message("Using Human Internal Data")
+    SwissGenesCombo <- HumanSwissGenesCombo
   }else{
     stop("ERROR: You need to choose a kingdom!")
   }
@@ -175,4 +178,4 @@ GenesLookeR <- function(AbstractStrings,IDs,Kingdom,Add,SppAbbr)
     }
     }
   return(OutCombo) #return output to main
-}
+  }
