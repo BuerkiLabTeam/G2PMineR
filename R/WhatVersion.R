@@ -7,5 +7,5 @@
 # Funded by EPSCoR GEM3 at Boise State University
 WhatVersion <- function()
 {
-  print("Impish Idahoa")
+  message("Happy Hyena")
 }
