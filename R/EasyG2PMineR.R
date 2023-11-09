@@ -13,11 +13,11 @@
 EasyG2PMineR <- function(Query, Kingdom, Seed, HowMany)
 {
   {
-    message("*************************************************")
-    message("***** Welcome to Version 2 of EasyG2PMineR! *****")
-    message("***** By John. M. A. Wojahn and Sven Buerki *****")
-    message("*****         ©2023 GNU AGPL v.3            *****")
-    message("*************************************************")
+    message("*********************************************************")
+    message("** Welcome to Version 3 (Happy Hyena) of EasyG2PMineR! **")
+    message("********* By John. M. A. Wojahn and Sven Buerki *********")
+    message("********         ©2023 GNU AGPL v.3            **********")
+    message("*********************************************************")
   }
   Sys.sleep(5)
   oldo <- getOption("warn", default = NULL)
@@ -57,13 +57,15 @@ EasyG2PMineR <- function(Query, Kingdom, Seed, HowMany)
   # Search
   message("Searching PubMed using Query")
   res <- suppressWarnings(RISmed::EUtilsSummary(Query,
-                             type="esearch", db="pubmed", datetype='pdat',
+                             type="esearch", db="pubmed",
                              retmax=10000))
+  message("Getting PubMed IDs")
   IDs <- attr(res,"PMID")
   if(length(IDs) > 0)
   {
     #select a different seed number for each group
     set.seed(Seed)
+    message("Pseudorandomly Sampling PubMed IDs")
     if(length(IDs) > HowMany)
     {
       IDs <- IDs[sample(1:length(IDs), size = HowMany, replace = F)]
